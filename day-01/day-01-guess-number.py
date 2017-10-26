@@ -22,7 +22,9 @@ else:
 #生成随机整数
 rand_no = random.randint(0,10)#获取的随机数包含0
 def compareNo(input_nu,nu):
+           '这是一个函数文档-1'
            if input_nu == rand_no:
+                      '这是一个函数文档-2'
                       return 1,"恭喜你猜中了！"
            elif input_nu > nu:
                       return -1,"错误，输入的数字太大了！"
@@ -45,3 +47,4 @@ while True:
            input_nu = int(input("请重新输入："))
 
 print("游戏结束")
+print(compareNo.__doc__)
