@@ -4,6 +4,10 @@ __init__    __new__     __del__
 用IDE的语法提示功能，可以看到有很多的魔法方法
 
 __sub__     __add__
+
+反运算
+
+增量赋值运算
 """
 
 class CapStr(str):
@@ -55,3 +59,13 @@ b = New_int(5)
 
 print('a+b=',a + b)
 print('a-b=',a - b)
+
+print("----------反运算-------------")
+
+class Nint(int):
+    def __rsub__(self, other):
+        return int.__sub__(self, other)
+
+a = Nint(6)
+print(3 - a)
+print("----------增量赋值运算-------------")
