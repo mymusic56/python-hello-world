@@ -1,6 +1,9 @@
-from Person import *
+# from object.Person import *
+from object.Person import Person, Teacher
 
-
+"""
+快速导入类： ctrl + alt + space
+"""
 p1 = Person('张三','男')
 print(p1.gender,p1.name, p1.getName(), p1.getAge(),p1.heair)
 p1.setAge(20)

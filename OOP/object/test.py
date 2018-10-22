@@ -3,7 +3,7 @@
 
 """
 import sys
-from Person import *
+from OOP.object.Person import *
 
 print(sys.path)
 p1 = Person('小明', 24)
