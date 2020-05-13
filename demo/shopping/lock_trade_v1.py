@@ -5,59 +5,26 @@ import redis
 import uuid
 import time
 
+from demo.redis_adapter import RedisAdapter
+
 # 市场名称
 market = "market:"
 
-HOST = "home.mytest.com"
-PORT = 6379
 
-
-class RedisAdapter:
-
-    host = "localhost"
-    port = 6379
-    decode_responses = True
-
-    def __init__(self, host, port, decode_responses=True):
-        self.host = host
-        self.port = port
-        self.decode_responses = decode_responses
-
-    def get_redis(self):
-        return redis.Redis(host=self.host, port=self.port,
-                           decode_responses=self.decode_responses,password="123456", db=1)
-
-
-def init_data(conn):
-    user_1 = {"user_id": 1, "name": "zhangsan", "funds": 50}
-    user_2 = {"user_id": 2, "name": "lisi", "funds": 40}
-    inventory_1 = ["itemA", "itemB"]
-    inventory_2 = ["itemA", "itemC"]
-    market_info = {"itemA.1": 20, "itemB.1": 30, "itemA.2": 25, "itemC.2": 33}
-    # hmset has deprecated
-    conn.hset("user:1", "user_id", 1)
-    conn.hset("user:1", "name", "zhangsan")
-    conn.hset("user:1", "funds", 50)
-
-    conn.hset("user:2", "user_id", 2)
-    conn.hset("user:2", "name", "lisi")
-    conn.hset("user:2", "funds", 40)
-
-    conn.sadd("inventory:1", "itemA", "itemB")
-    conn.sadd("inventory:2", "itemA", "itemC")
-    conn.zadd(market, market_info)
-
-
-conn = RedisAdapter(HOST, PORT).get_redis()
-init_data(conn)
-
-def acquire_lock(conn, lockname, acquire_lock_time=10):
-    identifier = uuid.uuid4()
+def acquire_lock(conn, lockname, acquire_lock_time=10, lock_time_out=10):
+    identifier = str(uuid.uuid4())
+    print(identifier)
 
     end_time = time.time() + acquire_lock_time
+    lockname = "lock:" + lockname
+    print(lockname)
     while time.time() < end_time:
-        if conn.setnx("lock:" + lockname, identifier):
+        if conn.setnx(lockname, identifier):
+            conn.expire(lockname, lock_time_out)
             return identifier
+        elif conn.ttl(lockname) == -1:
+            # 如果没有设置过期时间
+            conn.expire(lockname, lock_time_out)
         time.sleep(.001)
     return False
 
@@ -76,6 +43,7 @@ def purchase_item_with_lock(conn, buyer_id, seller_id, item_id):
     # 获取锁
     locked = acquire_lock(conn, lockname)
     if not locked:
+        print("-----------锁获取失败------------")
         return False
     pipe = conn.pipeline(True)
 
@@ -83,13 +51,15 @@ def purchase_item_with_lock(conn, buyer_id, seller_id, item_id):
         pipe.zscore(market, item)
         pipe.hget(buyer, "funds")
         price, funds = pipe.execute()
-        # 验证商品价格、验证用户余额是否正常
-        if price is None or price > funds:
+        # 验证商品是否存在（如果购买商品不属于卖家，则商品不存在）、验证用户余额是否正常
+        # hash只能存储整形的数字
+        if price is None or price > int(funds):
+            print("商品不存在，后者买家金额不足")
             return False
         # 执行交易: 卖家加，买家减，删除商品
-        pipe.hincrby(seller, int(price))
-        pipe.hincrby(buyer, int(-price))
-        pipe.zadd(inventory, item)
+        pipe.hincrby(seller, 'funds', int(price))
+        pipe.hincrby(buyer, 'funds', int(-price))
+        pipe.sadd(inventory, item_id)
         pipe.zrem(market, item)
         pipe.execute()
         return True
@@ -117,3 +87,21 @@ def release_lock(conn, lockname, locked):
 
     return False
 
+
+conn = RedisAdapter().get_redis()
+res = purchase_item_with_lock(conn, 1, 2, "itemC")
+print("购买结果："+str(res))
+now_market = conn.zrange(market, 0, -1)
+print("市场剩余商品：", now_market)
+print("买家商品：", conn.smembers("inventory:1"))
+print("卖家商品：", conn.smembers("inventory:2"))
+print("买家信息：", conn.hgetall("user:1"))
+print("卖家信息：", conn.hgetall("user:2"))
+
+
+"""
+127.0.0.1:6379[1]> zrange "market:" 0 -1
+127.0.0.1:6379[1]> hgetall user:1
+127.0.0.1:6379[1]> smembers inventory:1
+
+"""
