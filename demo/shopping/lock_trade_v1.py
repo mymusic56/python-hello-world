@@ -1,9 +1,7 @@
 # !/usr/bin/python3
 # -*- coding: UTF-8 -*-
 
-import redis
-import uuid
-import time
+from demo.mylock import MyLock
 
 from demo.redis_adapter import RedisAdapter
 
@@ -11,37 +9,19 @@ from demo.redis_adapter import RedisAdapter
 market = "market:"
 
 
-def acquire_lock(conn, lockname, acquire_lock_time=10, lock_time_out=10):
-    identifier = str(uuid.uuid4())
-    print(identifier)
-
-    end_time = time.time() + acquire_lock_time
-    lockname = "lock:" + lockname
-    print(lockname)
-    while time.time() < end_time:
-        if conn.setnx(lockname, identifier):
-            conn.expire(lockname, lock_time_out)
-            return identifier
-        elif conn.ttl(lockname) == -1:
-            # 如果没有设置过期时间
-            conn.expire(lockname, lock_time_out)
-        time.sleep(.001)
-    return False
-
-
 def purchase_item_with_lock(conn, buyer_id, seller_id, item_id):
-
     # 生成用户和商品信息标识
-    buyer = "user:"+str(buyer_id)
-    seller = "user:"+str(seller_id)
+    buyer = "user:" + str(buyer_id)
+    seller = "user:" + str(seller_id)
     item = "%s.%s" % (item_id, seller_id)
     inventory = "inventory:%s" % str(buyer_id)
 
     # 给卖家的商品加锁
     lockname = item
 
+    mylock = MyLock()
     # 获取锁
-    locked = acquire_lock(conn, lockname)
+    locked = mylock.acquire_lock(conn, lockname)
     if not locked:
         print("-----------锁获取失败------------")
         return False
@@ -65,38 +45,20 @@ def purchase_item_with_lock(conn, buyer_id, seller_id, item_id):
         return True
 
     finally:
-        release_lock(conn, lockname, locked)
+        mylock.release_lock(conn, lockname, locked)
 
 
-def release_lock(conn, lockname, locked):
-    pipe = conn.pipeline(True)
-    lockname = "lock:"+lockname
-    while True:
-        try:
-            pipe.watch(lockname)
-            if pipe.get(lockname) == locked:
-                pipe.multi()
-                pipe.delete(lockname)
-                pipe.execute()
-                return True
-            pipe.unwatch()
-            break
+if __name__ == "__main__":
+    conn = RedisAdapter().get_redis()
+    res = purchase_item_with_lock(conn, 1, 2, "itemC")
+    print("购买结果："+str(res))
+    now_market = conn.zrange(market, 0, -1)
+    print("市场剩余商品：", now_market)
+    print("买家商品：", conn.smembers("inventory:1"))
+    print("卖家商品：", conn.smembers("inventory:2"))
+    print("买家信息：", conn.hgetall("user:1"))
+    print("卖家信息：", conn.hgetall("user:2"))
 
-        except redis.exceptions.WatchError:
-            pass
-
-    return False
-
-
-conn = RedisAdapter().get_redis()
-res = purchase_item_with_lock(conn, 1, 2, "itemC")
-print("购买结果："+str(res))
-now_market = conn.zrange(market, 0, -1)
-print("市场剩余商品：", now_market)
-print("买家商品：", conn.smembers("inventory:1"))
-print("卖家商品：", conn.smembers("inventory:2"))
-print("买家信息：", conn.hgetall("user:1"))
-print("卖家信息：", conn.hgetall("user:2"))
 
 
 """

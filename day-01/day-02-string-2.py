@@ -8,4 +8,9 @@ print(str4)
 
 str5 = "{0:3.2f}{1}".format(2.3455,"GB")
 print(str5)
-print("%6.2f" % 23.3234)
+# 保留两位小数，总长度为7
+print("%7.2f" % 23.3234)
+
+strs = "12djkewsel212"
+print(strs.strip("12"))
+# 输出 djkewsel

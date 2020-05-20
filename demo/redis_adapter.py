@@ -21,4 +21,4 @@ class RedisAdapter:
 
     def get_redis(self):
         return redis.Redis(host=self.host, port=self.port,
-                           decode_responses=self.decode_responses,password="123456", db=1)
+                           decode_responses=self.decode_responses,password="123456", db=5)
