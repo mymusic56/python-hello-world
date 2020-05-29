@@ -6,8 +6,14 @@ input_nu = input("输入一个数字：")
 print(type(input_nu))
 
 #通过正则判断
-va = print(re.compile(r'^\d+$').match(input_nu))
+# ^\d+$   ^\d+  \d+
+m = re.compile(r'\d+').findall(input_nu)
+if not m:
+    print("输入为非数字："+input_nu)
+    sys.exit(0)
 
+print(m)
+input_nu = m[0]
 
 #通过str判断
 if not input_nu.isdigit() :
@@ -30,7 +36,7 @@ def compareNo(input_nu,nu):
                       return -1,"错误，输入的数字太大了！"
            else:
                       return -1,"错误，输入的数字太小了"
-guess_times = 1;
+guess_times = 1
 
 while True:
            guess_status,msg=compareNo(input_nu,rand_no)

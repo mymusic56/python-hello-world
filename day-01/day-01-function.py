@@ -28,7 +28,8 @@ def move_1(x,y,setp, angle=0):
 x, y = move_1(100,100,60,math.pi / 6)
 print(x,"\n",y)
 
-#可变参数
+#可变参数,按照元组打包
+print("--------------可变参数,按照元组打包 *--------------")
 def cakc(*numbers):
     sum = 0
     for n in numbers:
@@ -38,6 +39,19 @@ def cakc(*numbers):
 print(cakc())
 print(cakc(1,2,3,4))
 
+print("--------------可变参数,按照字典打包**--------------")
+
+def cakc2(**numbers):
+    print(numbers)
+    sum = 0
+    for k,v in numbers.items():
+        sum = sum + v
+    return sum
+
+print(cakc2())
+print(cakc2(a=1,b=2,d=3))
+
+print("----------------------------")
 #关键字参数
 def person(name, age, **kw):
     print("name:",name,"age:",age,"other:",kw)
@@ -53,6 +67,7 @@ def aaa():
         print("function 1 -> function2")
     bbb()
 aaa()
+print("--------------闭包--------------")
 
 #'闭包-》函数式编程'
 def func1(a):
@@ -63,12 +78,15 @@ print("闭包打印：",func1(2)(5))
 c = func1(3)
 print(c(5))
 
-#匿名函数， lambda表达式
+print("--------------lambda表达式--------------")
+
+#匿名函数， lambda表达式（简单的函数可以使用lambda表达式写法更简洁）
 #省略函数定义过程
 g = lambda x : 2*x+2
 h = lambda x,y : x+y #lambda 参数 : 返回表达式
 print(g(4),h(3,5))
 
+print("--------------bif 内置函数--------------")
 
 #bif 内置函数
 #过滤器, filter 过滤掉为false的数据
@@ -78,6 +96,8 @@ temp = range(10)
 show = filter(odd,temp)
 print(list(show))
 print(list(filter(None,[1,0,True,False])))
+
+print("--------------lambda表达式 2 --------------")
 
 #使用lambda重写上面的方法
 print (list(filter(lambda x:x %2,range(10))))

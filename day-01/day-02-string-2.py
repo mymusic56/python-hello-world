@@ -14,3 +14,11 @@ print("%7.2f" % 23.3234)
 strs = "12djkewsel212"
 print(strs.strip("12"))
 # 输出 djkewsel
+
+str6 = '{} is a {} teacher.'.format("zhangsan", "good")
+print(str6)
+str6 = '%s is a %s teacher.' % ("lisi", "good")
+print(str6)
+
+s = " ".join(map(str, range(0, 10)))
+print(s)

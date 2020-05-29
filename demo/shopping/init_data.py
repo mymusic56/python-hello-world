@@ -32,5 +32,7 @@ def init_data(conn):
     conn.zadd(market, market_info)
 
 
-conn = RedisAdapter().get_redis()
-init_data(conn)
+#
+if __name__ == "__main__":
+    conn = RedisAdapter().get_redis()
+    init_data(conn)

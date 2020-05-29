@@ -12,7 +12,7 @@ h = 0 == False        #true
 i = "" == False       #false
 j = "" == 0           #false
 k = "0" == False      #false
-l = "2" == True       #true
+l = "2" == True       #false
 
 # not 表示取反 
 # True 代表 数字1 False 代表数字0
